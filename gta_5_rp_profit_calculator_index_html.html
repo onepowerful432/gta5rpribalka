@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GTA 5 RP — Калькулятор прибыли</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg: #03131f;
+      --panel: rgba(7, 27, 43, 0.88);
+      --panel-2: #0a2438;
+      --panel-3: #082133;
+      --border: rgba(103, 232, 249, 0.18);
+      --text: #f3fdff;
+      --muted: rgba(203, 244, 255, 0.72);
+      --cyan: #67e8f9;
+      --cyan-2: #22d3ee;
+      --cyan-3: #a5f3fc;
+      --danger: #fca5a5;
+      --danger-bg: rgba(248, 113, 113, 0.12);
+      --shadow: 0 0 30px rgba(34, 211, 238, 0.08);
+      --radius: 24px;
+    }
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(0,225,255,0.22), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(35,140,255,0.22), transparent 35%),
+        linear-gradient(180deg, #021018 0%, #062235 100%);
+      min-height: 100vh;
+    }
+    .glow, .glow2, .glow3 {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(70px);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .glow { width: 320px; height: 320px; left: -40px; top: -40px; background: rgba(34,211,238,0.18); }
+    .glow2 { width: 360px; height: 360px; right: -60px; top: 180px; background: rgba(56,189,248,0.14); }
+    .glow3 { width: 280px; height: 280px; left: 30%; bottom: -60px; background: rgba(59,130,246,0.14); }
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px 16px 40px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(103, 232, 249, 0.28);
+      background: rgba(34, 211, 238, 0.1);
+      color: var(--cyan-3);
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 0 30px rgba(34,211,238,0.12);
+    }
+    h1 {
+      margin: 18px 0 10px;
+      font-size: clamp(38px, 6vw, 72px);
+      line-height: 0.95;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+    h1 span { color: var(--cyan); text-shadow: 0 0 18px rgba(103,232,249,0.45); }
+    .lead {
+      margin: 0 0 26px;
+      max-width: 780px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+    }
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+    .tab {
+      border: 1px solid var(--border);
+      background: rgba(10, 36, 56, 0.82);
+      color: var(--text);
+      border-radius: 20px;
+      padding: 16px;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+    .tab:hover { background: #102b42; }
+    .tab.active {
+      background: rgba(34, 211, 238, 0.14);
+      box-shadow: 0 0 25px rgba(34,211,238,0.14);
+      border-color: rgba(103, 232, 249, 0.5);
+    }
+    .tab-step { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .tab-title { font-size: 18px; font-weight: 800; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.9fr);
+      gap: 24px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+    .card-header {
+      padding: 24px 24px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .card-title {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--text);
+    }
+    .card-body { padding: 0 24px 24px; }
+    .muted { color: var(--muted); }
+    .row, .grid-2, .grid-expense, .fish-list-item, .summary-grid {
+      display: grid;
+      gap: 14px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-expense { grid-template-columns: 1.4fr 0.8fr auto; align-items: center; }
+    .section-box {
+      background: var(--panel-2);
+      border: 1px solid rgba(103, 232, 249, 0.12);
+      border-radius: 22px;
+      padding: 16px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--cyan-3);
+      font-weight: 700;
+      font-size: 14px;
+    }
+    input, select {
+      width: 100%;
+      height: 48px;
+      border-radius: 18px;
+      border: 1px solid rgba(103, 232, 249, 0.14);
+      background: #081f31;
+      color: var(--text);
+      padding: 0 14px;
+      outline: none;
+      font-size: 15px;
+    }
+    input::placeholder { color: rgba(203, 244, 255, 0.34); }
+    .btn {
+      border: 0;
+      border-radius: 18px;
+      height: 48px;
+      padding: 0 18px;
+      font-size: 15px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+    .btn-primary {
+      background: var(--cyan);
+      color: #02263b;
+      box-shadow: 0 0 24px rgba(103,232,249,0.2);
+    }
+    .btn-primary:hover { filter: brightness(1.05); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--cyan-3);
+      border: 1px solid rgba(103, 232, 249, 0.18);
+    }
+    .btn-danger {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      background: transparent;
+      color: var(--cyan-3);
+      border: 1px solid rgba(103, 232, 249, 0.14);
+    }
+    .btn-danger:hover { background: var(--danger-bg); color: var(--danger); }
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .switch {
+      position: relative;
+      width: 62px;
+      height: 34px;
+      flex: 0 0 auto;
+    }
+    .switch input { display: none; }
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: #123247;
+      border: 1px solid rgba(103,232,249,0.16);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      left: 4px;
+      top: 4px;
+      border-radius: 50%;
+      background: #dffcff;
+      transition: 0.2s ease;
+    }
+    .switch input:checked + .slider { background: rgba(34,211,238,0.24); }
+    .switch input:checked + .slider::before { transform: translateX(28px); background: var(--cyan); }
+    .choice-grid, .profit-grid { display: grid; gap: 14px; }
+    .choice-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .choice {
+      border: 1px solid rgba(103,232,249,0.14);
+      background: var(--panel-2);
+      border-radius: 22px;
+      padding: 16px;
+      cursor: pointer;
+    }
+    .choice.active {
+      border-color: rgba(103,232,249,0.5);
+      background: rgba(34,211,238,0.14);
+      box-shadow: 0 0 22px rgba(34,211,238,0.12);
+    }
+    .choice h4 { margin: 0 0 6px; font-size: 17px; }
+    .choice p { margin: 0; color: var(--muted); }
+    .empty {
+      border: 1px dashed rgba(103,232,249,0.16);
+      background: var(--panel-2);
+      border-radius: 22px;
+      padding: 22px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .profit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .profit-card, .fish-card, .stat-card {
+      border-radius: 22px;
+      background: var(--panel-2);
+      border: 1px solid rgba(103,232,249,0.12);
+      padding: 16px;
+    }
+    .fish-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(34,211,238,0.1);
+      border: 1px solid rgba(103,232,249,0.12);
+      color: var(--cyan-3);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .profit-number, .stat-value {
+      font-size: clamp(28px, 4vw, 38px);
+      font-weight: 900;
+      margin-top: 6px;
+      line-height: 1;
+    }
+    .profit-number { color: var(--cyan); text-shadow: 0 0 14px rgba(103,232,249,0.18); }
+    .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sidebar { display: grid; gap: 24px; align-content: start; }
+    .progress-wrap {
+      height: 12px;
+      border-radius: 999px;
+      background: #0a1f2f;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22d3ee, #67e8f9);
+      border-radius: 999px;
+      transition: width 0.25s ease;
+    }
+    .hidden { display: none !important; }
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .tabs, .grid-2, .choice-grid, .profit-grid, .summary-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .tabs { grid-template-columns: 1fr 1fr; }
+      .grid-expense { grid-template-columns: 1fr; }
+      .card-header, .fish-card, .actions { flex-direction: column; align-items: stretch; }
+      .container { padding: 20px 12px 30px; }
+      .card-body, .card-header { padding-left: 16px; padding-right: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow"></div>
+  <div class="glow2"></div>
+  <div class="glow3"></div>
+
+  <main class="container">
+    <div class="badge">GTA 5 RP • Яркий калькулятор прибыли</div>
+    <h1>Считай улов и <span>прибыль</span></h1>
+    <p class="lead">Обычный статический сайт без React: сначала цель, потом расходы, потом улов и готовый итог. Можно просто залить этот файл как <b>index.html</b> на GitHub Pages.</p>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="goal"><div class="tab-step">Шаг 1</div><div class="tab-title">Цель</div></button>
+      <button class="tab" data-tab="expenses"><div class="tab-step">Шаг 2</div><div class="tab-title">Расходы</div></button>
+      <button class="tab" data-tab="catch"><div class="tab-step">Шаг 3</div><div class="tab-title">Улов</div></button>
+      <button class="tab" data-tab="summary"><div class="tab-step">Шаг 4</div><div class="tab-title">Итог</div></button>
+    </div>
+
+    <div class="layout">
+      <section id="mainContent"></section>
+
+      <aside class="sidebar">
+        <div class="card">
+          <div class="card-header"><h2 class="card-title">Быстрый итог</h2></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="stat-card">
+                <div class="muted">Улов</div>
+                <div class="stat-value" id="sideKg">0 кг</div>
+              </div>
+              <div class="stat-card">
+                <div class="muted">С рыбы</div>
+                <div class="stat-value" id="sideRevenue" style="color: var(--cyan);">$0</div>
+              </div>
+              <div class="stat-card">
+                <div class="muted">Расходы</div>
+                <div class="stat-value" id="sideExpenses">$0</div>
+              </div>
+              <div class="stat-card" style="background: rgba(34,211,238,0.12); border-color: rgba(103,232,249,0.18);">
+                <div class="muted">Чистая прибыль</div>
+                <div class="stat-value" id="sideNet" style="color: var(--cyan);">$0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card hidden" id="goalSidebar">
+          <div class="card-header"><h2 class="card-title">Твоя цель</h2></div>
+          <div class="card-body">
+            <div class="section-box">
+              <div class="muted">Копишь на</div>
+              <div style="font-size: 22px; font-weight: 900; margin-top: 6px;" id="goalSidebarName">—</div>
+            </div>
+            <div style="margin-top: 14px;">
+              <div style="display:flex; justify-content:space-between; gap:12px; color: var(--muted); font-size: 14px;">
+                <span id="goalSidebarCurrent">$0</span>
+                <span id="goalSidebarTarget">$0</span>
+              </div>
+              <div class="progress-wrap"><div class="progress-bar" id="goalProgress"></div></div>
+            </div>
+            <div class="section-box" style="margin-top: 14px;">
+              <div class="muted">Осталось</div>
+              <div class="stat-value" id="goalSidebarRemain">$0</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const state = {
+      activeTab: 'goal',
+      useGoal: false,
+      goalName: '',
+      goalAmount: 0,
+      expenses: [],
+      fish: [],
+      useCustomFishName: false,
+      selectedFishName: '',
+      newFishName: '',
+      entryKg: '',
+      entryPrice: ''
+    };
+
+    function formatMoney(value) {
+      const number = Number(value) || 0;
+      return new Intl.NumberFormat('ru-RU', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(number);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function getTotals() {
+      const totalExpenses = state.expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+      const totalRevenue = state.fish.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+      const totalKg = state.fish.reduce((sum, item) => sum + (Number(item.kg) || 0), 0);
+      const netProfit = totalRevenue - totalExpenses;
+      const progress = state.useGoal && state.goalAmount > 0 ? Math.max(0, Math.min(100, (netProfit / state.goalAmount) * 100)) : 0;
+      const remaining = state.useGoal ? Math.max(0, state.goalAmount - netProfit) : 0;
+      return { totalExpenses, totalRevenue, totalKg, netProfit, progress, remaining };
+    }
+
+    function getUniqueFishNames() {
+      return [...new Set(state.fish.map(item => item.name).filter(Boolean))];
+    }
+
+    function getProfitByFish() {
+      const map = new Map();
+      state.fish.forEach(item => {
+        const key = item.name || 'Без названия';
+        const current = map.get(key) || { kg: 0, price: 0, count: 0 };
+        map.set(key, {
+          kg: current.kg + (Number(item.kg) || 0),
+          price: current.price + (Number(item.price) || 0),
+          count: current.count + 1
+        });
+      });
+      return [...map.entries()].map(([name, data]) => ({ name, ...data }));
+    }
+
+    function setTab(tab) {
+      state.activeTab = tab;
+      render();
+    }
+
+    function toggleGoal() {
+      state.useGoal = !state.useGoal;
+      render();
+    }
+
+    function addExpense() {
+      state.expenses.push({ id: Date.now(), title: '', amount: 0 });
+      render();
+    }
+
+    function removeExpense(id) {
+      state.expenses = state.expenses.filter(item => item.id !== id);
+      render();
+    }
+
+    function updateExpense(id, field, value) {
+      state.expenses = state.expenses.map(item => item.id === id ? { ...item, [field]: field === 'title' ? value : Number(value) || 0 } : item);
+      renderSidebar();
+    }
+
+    function removeFish(id) {
+      state.fish = state.fish.filter(item => item.id !== id);
+      if (!getUniqueFishNames().includes(state.selectedFishName)) {
+        state.selectedFishName = getUniqueFishNames()[0] || '';
+      }
+      render();
+    }
+
+    function addFishEntry() {
+      const finalName = state.useCustomFishName ? state.newFishName.trim() : state.selectedFishName.trim();
+      const kg = Number(state.entryKg) || 0;
+      const price = Number(state.entryPrice) || 0;
+      if (!finalName || (!kg && !price)) return;
+
+      state.fish.unshift({ id: Date.now(), name: finalName, kg, price });
+      state.entryKg = '';
+      state.entryPrice = '';
+      if (state.useCustomFishName) {
+        state.selectedFishName = finalName;
+        state.newFishName = '';
+        state.useCustomFishName = false;
+      }
+      render();
+    }
+
+    function renderGoalTab() {
+      return `
+        <div class="card">
+          <div class="card-header"><h2 class="card-title">Цель накопления</h2></div>
+          <div class="card-body">
+            <div class="section-box switch-row">
+              <div>
+                <div style="font-size:18px; font-weight:800;">Использовать цель</div>
+                <div class="muted" style="margin-top:6px;">Можно включить цель или считать просто чистую прибыль.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" ${state.useGoal ? 'checked' : ''} onchange="toggleGoal()">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="grid-2 ${state.useGoal ? '' : 'hidden'}" style="margin-top:16px;">
+              <div>
+                <label>На что копишь</label>
+                <input value="${escapeHtml(state.goalName)}" placeholder="Например: Дом в Вайнвуде" oninput="state.goalName=this.value; renderSidebar()">
+              </div>
+              <div>
+                <label>Сумма цели</label>
+                <input type="number" value="${state.goalAmount || ''}" placeholder="500000" oninput="state.goalAmount=Number(this.value)||0; renderSidebar()">
+              </div>
+            </div>
+
+            <div class="actions">
+              <span></span>
+              <button class="btn btn-primary" onclick="setTab('expenses')">Дальше: расходы</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function renderExpensesTab() {
+      return `
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Расходы</h2>
+            <button class="btn btn-primary" onclick="addExpense()">Добавить</button>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              ${state.expenses.length ? state.expenses.map(item => `
+                <div class="grid-expense section-box">
+                  <input value="${escapeHtml(item.title)}" placeholder="Название расхода" oninput="updateExpense(${item.id}, 'title', this.value)">
+                  <input type="number" value="${item.amount || ''}" placeholder="Сумма" oninput="updateExpense(${item.id}, 'amount', this.value)">
+                  <button class="btn-danger" onclick="removeExpense(${item.id})">✕</button>
+                </div>`).join('') : `<div class="empty">Расходов пока нет.</div>`}
+            </div>
+            <div class="section-box" style="margin-top:16px;">
+              <div class="muted">Сумма всех расходов</div>
+              <div class="profit-number">${formatMoney(getTotals().totalExpenses)}</div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-secondary" onclick="setTab('goal')">Назад</button>
+              <button class="btn btn-primary" onclick="setTab('catch')">Дальше: улов</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function renderCatchTab() {
+      const names = getUniqueFishNames();
+      const profitByFish = getProfitByFish();
+      return `
+        <div class="row">
+          <div class="card">
+            <div class="card-header"><h2 class="card-title">Добавить улов</h2></div>
+            <div class="card-body">
+              <div class="choice-grid">
+                <button class="choice ${!state.useCustomFishName ? 'active' : ''}" onclick="state.useCustomFishName=false; render()">
+                  <h4>Добавить существующую рыбу</h4>
+                  <p>Чтобы не писать название заново.</p>
+                </button>
+                <button class="choice ${state.useCustomFishName ? 'active' : ''}" onclick="state.useCustomFishName=true; render()">
+                  <h4>Добавить новую рыбу</h4>
+                  <p>Новый вид улова с новым названием.</p>
+                </button>
+              </div>
+
+              ${state.useCustomFishName ? `
+                <div style="margin-top:16px;">
+                  <label>Название рыбы</label>
+                  <input value="${escapeHtml(state.newFishName)}" placeholder="Например: Осётр" oninput="state.newFishName=this.value">
+                </div>` : `
+                <div style="margin-top:16px;">
+                  <label>Выбери рыбу</label>
+                  <select onchange="state.selectedFishName=this.value">
+                    <option value="">Выбери сохранённую рыбу</option>
+                    ${names.map(name => `<option value="${escapeHtml(name)}" ${state.selectedFishName === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}
+                  </select>
+                </div>`}
+
+              <div class="grid-2" style="margin-top:16px;">
+                <div>
+                  <label>Вес рыбы</label>
+                  <input type="number" value="${state.entryKg}" placeholder="Кг" oninput="state.entryKg=this.value">
+                </div>
+                <div>
+                  <label>Цена за эту рыбу</label>
+                  <input type="number" value="${state.entryPrice}" placeholder="Например: 25200" oninput="state.entryPrice=this.value">
+                </div>
+              </div>
+
+              <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap;">
+                <button class="btn btn-primary" onclick="addFishEntry()">Добавить в улов</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h2 class="card-title">Прибыль по каждой рыбе</h2></div>
+            <div class="card-body">
+              <div class="profit-grid">
+                ${profitByFish.length ? profitByFish.map(item => `
+                  <div class="profit-card">
+                    <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+                      <div>
+                        <div style="font-size:20px; font-weight:900;">${escapeHtml(item.name)}</div>
+                        <div class="muted" style="margin-top:4px;">Записей: ${item.count}</div>
+                      </div>
+                      <div class="chip">${item.kg.toLocaleString('ru-RU')} кг</div>
+                    </div>
+                    <div class="section-box" style="margin-top:14px; background: rgba(34,211,238,0.1);">
+                      <div class="muted">Прибыль с этой рыбы</div>
+                      <div class="profit-number">${formatMoney(item.price)}</div>
+                    </div>
+                  </div>`).join('') : `<div class="empty" style="grid-column:1/-1;">Пока нет добавленной рыбы.</div>`}
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h2 class="card-title">Последний улов</h2></div>
+            <div class="card-body">
+              <div class="row">
+                ${state.fish.length ? state.fish.map(item => `
+                  <div class="fish-card">
+                    <div>
+                      <div style="font-size:20px; font-weight:900;">${escapeHtml(item.name || 'Без названия')}</div>
+                      <div class="chips">
+                        <div class="chip">Вес: ${Number(item.kg || 0).toLocaleString('ru-RU')} кг</div>
+                        <div class="chip">Цена: ${formatMoney(item.price)}</div>
+                      </div>
+                    </div>
+                    <button class="btn-danger" onclick="removeFish(${item.id})">✕</button>
+                  </div>`).join('') : `<div class="empty">Улов пока пустой.</div>`}
+              </div>
+              <div class="actions">
+                <button class="btn btn-secondary" onclick="setTab('expenses')">Назад</button>
+                <button class="btn btn-primary" onclick="setTab('summary')">Смотреть итог</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function renderSummaryTab() {
+      const totals = getTotals();
+      return `
+        <div class="row">
+          <div class="card">
+            <div class="card-header"><h2 class="card-title">Итоги</h2></div>
+            <div class="card-body">
+              <div class="summary-grid">
+                <div class="stat-card"><div class="muted">Общий вес рыбы</div><div class="stat-value">${totals.totalKg.toLocaleString('ru-RU')} кг</div></div>
+                <div class="stat-card"><div class="muted">Общая прибыль с рыбы</div><div class="stat-value" style="color: var(--cyan);">${formatMoney(totals.totalRevenue)}</div></div>
+                <div class="stat-card"><div class="muted">Все расходы</div><div class="stat-value">${formatMoney(totals.totalExpenses)}</div></div>
+                <div class="stat-card" style="background: rgba(34,211,238,0.12); border-color: rgba(103,232,249,0.18);"><div class="muted">Чистая прибыль</div><div class="stat-value" style="color:${totals.netProfit >= 0 ? 'var(--cyan)' : 'var(--danger)'};">${formatMoney(totals.netProfit)}</div></div>
+              </div>
+            </div>
+          </div>
+
+          ${state.useGoal ? `
+            <div class="card">
+              <div class="card-header"><h2 class="card-title">Прогресс к цели</h2></div>
+              <div class="card-body">
+                <div class="section-box">
+                  <div class="muted">Цель</div>
+                  <div style="font-size:24px; font-weight:900; margin-top:6px;">${escapeHtml(state.goalName || 'Без названия')}</div>
+                </div>
+                <div style="margin-top:16px; display:flex; justify-content:space-between; gap:12px; color: var(--muted); font-size: 14px;">
+                  <span>${formatMoney(totals.netProfit)}</span>
+                  <span>${formatMoney(state.goalAmount)}</span>
+                </div>
+                <div class="progress-wrap"><div class="progress-bar" style="width:${totals.progress}%"></div></div>
+                <div class="section-box" style="margin-top:16px;">
+                  <div class="muted">Осталось накопить</div>
+                  <div class="stat-value">${formatMoney(totals.remaining)}</div>
+                </div>
+              </div>
+            </div>` : ''}
+
+          <div class="actions">
+            <button class="btn btn-secondary" onclick="setTab('catch')">Назад</button>
+            <button class="btn btn-primary" onclick="setTab('goal')">В начало</button>
+          </div>
+        </div>`;
+    }
+
+    function renderMain() {
+      const root = document.getElementById('mainContent');
+      if (state.activeTab === 'goal') root.innerHTML = renderGoalTab();
+      if (state.activeTab === 'expenses') root.innerHTML = renderExpensesTab();
+      if (state.activeTab === 'catch') root.innerHTML = renderCatchTab();
+      if (state.activeTab === 'summary') root.innerHTML = renderSummaryTab();
+    }
+
+    function renderSidebar() {
+      const totals = getTotals();
+      document.getElementById('sideKg').textContent = totals.totalKg.toLocaleString('ru-RU') + ' кг';
+      document.getElementById('sideRevenue').textContent = formatMoney(totals.totalRevenue);
+      document.getElementById('sideExpenses').textContent = formatMoney(totals.totalExpenses);
+      const net = document.getElementById('sideNet');
+      net.textContent = formatMoney(totals.netProfit);
+      net.style.color = totals.netProfit >= 0 ? 'var(--cyan)' : 'var(--danger)';
+
+      const goalSidebar = document.getElementById('goalSidebar');
+      if (state.useGoal) {
+        goalSidebar.classList.remove('hidden');
+        document.getElementById('goalSidebarName').textContent = state.goalName || 'Без названия';
+        document.getElementById('goalSidebarCurrent').textContent = formatMoney(totals.netProfit);
+        document.getElementById('goalSidebarTarget').textContent = formatMoney(state.goalAmount);
+        document.getElementById('goalSidebarRemain').textContent = formatMoney(totals.remaining);
+        document.getElementById('goalProgress').style.width = totals.progress + '%';
+      } else {
+        goalSidebar.classList.add('hidden');
+      }
+    }
+
+    function renderTabs() {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === state.activeTab);
+      });
+    }
+
+    function render() {
+      renderTabs();
+      renderMain();
+      renderSidebar();
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => setTab(tab.dataset.tab));
+    });
+
+    render();
+  </script>
+</body>
+</html>
